@@ -1,6 +1,6 @@
 
 """
-This script tests SSH conectivity to a Cisco IOS device using Netmiko. 
+This script tests SSH connectivity to a Linux device using Netmiko. 
 -It connects to the device
 - Executes the command "show version"
 - Prints the output
@@ -10,17 +10,18 @@ This script tests SSH conectivity to a Cisco IOS device using Netmiko.
 from netmiko import ConnectHandler
 
 device = {
-    'device_type': 'cisco_ios',
-    'ip': '192.168.1.1',
-    'username': 'admin',
-    'password': 'c1sco_123',
+    'device_type': 'linux',
+    'ip': os.getenv("DEVICE_IP"),
+    'username': os.getenv("DEVICE_USER"),
+    'password': os.getenv("DEVICE_PASS"),
 }
 
 
 connection = ConnectHandler(**device)
-output = connection.send_command("show version")
+output = connection.send_command("whoami")
 print(output)
 connection.disconnect()
+
 
 
 
