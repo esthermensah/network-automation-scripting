@@ -1,29 +1,53 @@
-
-# # source venv/Scripts/activate
-
-
 import os
 import paramiko
+from datetime import datetime
 
-ip = os.getenv("DEVICE_IP")
+# Define "devices" – for now, just your own laptop with different aliases
+devices = [
+    {"name": "MyLaptop-1", "ip": os.getenv("DEVICE_IP")},
+    {"name": "MyLaptop-2", "ip": os.getenv("DEVICE_IP")}
+]
+
 username = os.getenv("DEVICE_USER")
 password = os.getenv("DEVICE_PASS")
 
-ssh = paramiko.SSHClient()
-ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+# Commands to run
+commands = [
+    "echo Hello from Windows",
+    "hostname"
+]
 
-ssh.connect(ip, username=username, password=password)
+# Ensure logs folder exists
+os.makedirs("logs", exist_ok=True)
 
-# stdin, stdout, stderr = ssh.exec_command('cmd /c echo Hello from Windows')
-stdin, stdout, stderr = ssh.exec_command('echo Hello from Windows')
+# Loop through each "device"
+for device in devices:
+    print(f"\nConnecting to {device['name']} ({device['ip']})...")
+    
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    
+    try:
+        ssh.connect(device["ip"], username=username, password=password)
 
-print("Command Output:\n", stdout.read().decode())
+        log_filename = f"logs/{device['name']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+        with open(log_filename, "w") as log_file:
+            for cmd in commands:
+                stdin, stdout, stderr = ssh.exec_command(cmd)
+                output = stdout.read().decode()
+                error = stderr.read().decode()
 
+                # Print and log
+                print(f"\n[{device['name']}] $ {cmd}\n{output}")
+                log_file.write(f"\n[{device['name']}] $ {cmd}\n{output}")
+                if error:
+                    print(f"[{device['name']}] Error: {error}")
+                    log_file.write(f"[ERROR]: {error}")
 
-ssh.close()
+        ssh.close()
 
-
-
+    except Exception as e:
+        print(f"Failed to connect to {device['name']}: {e}")
 
 
 
